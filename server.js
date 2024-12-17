@@ -9,12 +9,32 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const API_KEY = process.env.YOUTUBE_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-// Configure CORS
+// Configure CORS with specific origins
+const allowedOrigins = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'https://youtube-transcript-gsbv.onrender.com',
+    'https://yttranscript-7d84.onrender.com'
+];
+
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'https://yttranscript-7d84.onrender.com'],
+    origin: function(origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) === -1) {
+            console.log('Origin attempted:', origin);
+            return callback(null, false);
+        }
+        return callback(null, true);
+    },
     methods: ['GET', 'POST'],
-    credentials: true
+    credentials: true,
+    optionsSuccessStatus: 200
 }));
+
+// Add CORS headers for preflight requests
+app.options('*', cors());
 
 app.use(express.json());
 app.use(express.static('.'));

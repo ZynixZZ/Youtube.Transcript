@@ -119,9 +119,17 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     },
+                    mode: 'cors',
+                    credentials: 'include',
                     body: JSON.stringify({ videoId })
                 });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to fetch transcript');
+                }
 
                 const data = await response.json();
                 if (data.success) {
@@ -272,18 +280,18 @@
                     })
                 });
 
-                const data = await response.json();
-                
                 // Wait for 1.5 seconds before showing the response
                 await new Promise(resolve => setTimeout(resolve, 1500));
                 
                 // Remove loading animation
                 document.getElementById(loadingId).remove();
                 
-                if (data.success) {
-                    addMessageToChat('ai', data.answer);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    addMessageToChat('ai', 'Sorry, I encountered an error: ' + errorData.error);
                 } else {
-                    throw new Error(data.error);
+                    const data = await response.json();
+                    addMessageToChat('ai', data.answer);
                 }
             } catch (error) {
                 // Remove loading animation
