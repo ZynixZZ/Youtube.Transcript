@@ -115,23 +115,33 @@
                 const videoId = extractVideoId(url);
                 result.innerHTML = '<div class="loading"></div> Converting...';
                 
+                console.log('Sending request to:', 'https://yttranscript-7d84.onrender.com/api/convert');
+                console.log('With video ID:', videoId);
+
                 const response = await fetch('https://yttranscript-7d84.onrender.com/api/convert', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Origin': 'https://youtube-transcript-gsbv.onrender.com'
                     },
                     mode: 'cors',
                     body: JSON.stringify({ videoId })
                 });
 
-                console.log('Response status:', response.status);
-                console.log('Response headers:', response.headers);
+                console.log('Response received:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries())
+                });
 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
                 }
 
                 const data = await response.json();
+                console.log('Response data:', data);
+
                 if (data.success) {
                     videoTranscript = data.text;
                     currentVideoTitle = data.videoTitle;
