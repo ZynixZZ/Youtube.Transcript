@@ -115,19 +115,16 @@
                 const videoId = extractVideoId(url);
                 result.innerHTML = '<div class="loading"></div> Converting...';
                 
-                const response = await fetch(`${API_BASE_URL}/api/convert`, {
+                const response = await fetch('https://yttranscript-7d84.onrender.com/api/convert', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
+                        'Content-Type': 'application/json'
                     },
-                    mode: 'cors',
-                    credentials: 'include',
                     body: JSON.stringify({ videoId })
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json();
+                    const errorData = await response.json().catch(() => ({ error: 'Failed to fetch transcript' }));
                     throw new Error(errorData.error || 'Failed to fetch transcript');
                 }
 
