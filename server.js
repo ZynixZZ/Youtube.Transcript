@@ -8,49 +8,33 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const API_KEY = process.env.YOUTUBE_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-// Enable CORS for all routes
-app.use(cors());
+// Configure CORS - this must be the first middleware
+const corsOptions = {
+    origin: 'https://youtube-transcript-gsbv.onrender.com',
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type'],
+    optionsSuccessStatus: 200
+};
 
-// Additional CORS headers middleware
-app.use((req, res, next) => {
-    // Allow specific origin
-    res.header('Access-Control-Allow-Origin', 'https://youtube-transcript-gsbv.onrender.com');
-    
-    // Allow specific methods
-    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    
-    // Allow specific headers
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-    
-    // Handle preflight
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-    
-    next();
-});
+// Apply CORS middleware first
+app.use(cors(corsOptions));
 
-// Parse JSON bodies
+// Then parse JSON
 app.use(express.json());
 
-// Serve static files
+// Then serve static files
 app.use(express.static('.'));
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-    console.error('Error:', err);
-    res.status(500).json({
-        success: false,
-        error: 'Internal Server Error',
-        message: err.message
-    });
-});
 
 // Request logging middleware
 app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-    console.log('Headers:', req.headers);
-    if (req.body) console.log('Body:', req.body);
+    console.log('=== Incoming Request ===');
+    console.log(`Time: ${new Date().toISOString()}`);
+    console.log(`Method: ${req.method}`);
+    console.log(`Path: ${req.path}`);
+    console.log(`Origin: ${req.headers.origin}`);
+    console.log(`Headers:`, req.headers);
+    if (req.body) console.log(`Body:`, req.body);
+    console.log('=====================');
     next();
 });
 
@@ -246,6 +230,16 @@ app.post('/api/expand-summary', async (req, res) => {
             error: error.message
         });
     }
+});
+
+// Error handling middleware (should be last)
+app.use((err, req, res, next) => {
+    console.error('Error occurred:', err);
+    res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message: err.message
+    });
 });
 
 app.listen(port, '0.0.0.0', () => {
