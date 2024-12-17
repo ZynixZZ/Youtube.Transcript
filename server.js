@@ -31,25 +31,36 @@ if (!GEMINI_API_KEY) {
     console.error('ERROR: GEMINI_API_KEY is not set in environment variables');
 }
 
-// Configure CORS - this must be the first middleware
-const corsOptions = {
-    origin: [
+// CORS middleware
+app.use((req, res, next) => {
+    const allowedOrigins = [
         'http://localhost:10000',
         'http://127.0.0.1:10000',
         'https://youtube-transcript-gsbv.onrender.com'
-    ],
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type'],
-    optionsSuccessStatus: 200
-};
+    ];
 
-// Apply CORS middleware first
-app.use(cors(corsOptions));
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
 
-// Then parse JSON
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Max-Age', '86400');
+
+    // Handle preflight
+    if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
+    }
+
+    next();
+});
+
+// Parse JSON bodies
 app.use(express.json());
 
-// Then serve static files
+// Serve static files
 app.use(express.static('.'));
 
 // Request logging middleware

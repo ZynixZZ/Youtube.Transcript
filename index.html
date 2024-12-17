@@ -115,25 +115,32 @@
                 const videoId = extractVideoId(url);
                 result.innerHTML = '<div class="loading"></div> Converting...';
 
-                const response = await fetch(`${API_BASE_URL}/api/convert`, {
+                const apiUrl = 'https://yttranscript-7d84.onrender.com/api/convert';
+                console.log('Sending request to:', apiUrl);
+
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
+                    credentials: 'omit',
                     body: JSON.stringify({ videoId })
                 });
 
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('Server response:', {
-                        status: response.status,
-                        statusText: response.statusText,
-                        body: errorText
-                    });
-                    throw new Error(`Server error: ${response.status}`);
+                    let errorMessage;
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.error || `HTTP error! status: ${response.status}`;
+                    } catch (e) {
+                        errorMessage = `HTTP error! status: ${response.status}`;
+                    }
+                    throw new Error(errorMessage);
                 }
 
                 const data = await response.json();
+                console.log('Response data:', data);
+
                 if (data.success) {
                     videoTranscript = data.text;
                     currentVideoTitle = data.videoTitle || 'Unknown Title';
