@@ -62,10 +62,10 @@
         let conversationHistory = [];  // Store conversation history
         let currentSummary = '';
 
-        // Add API URL configuration
-        const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? ''  // Use relative URL for localhost
-            : 'https://yttranscript-7d84.onrender.com'; // Your Render deployment URL
+        // API URL configuration - use local URL for development
+        const API_BASE_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:10000'  // Use local backend for development
+            : 'https://yttranscript-7d84.onrender.com';  // Use Render backend for production
 
         function showForm(formId) {
             // Hide all forms
@@ -115,7 +115,7 @@
                 const videoId = extractVideoId(url);
                 result.innerHTML = '<div class="loading"></div> Converting...';
 
-                const response = await fetch('https://yttranscript-7d84.onrender.com/api/convert', {
+                const response = await fetch(`${API_BASE_URL}/api/convert`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

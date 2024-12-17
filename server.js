@@ -1,16 +1,42 @@
+// Load environment variables from .env file for local development
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const { google } = require('googleapis');
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 10000;
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
+// Log environment variables at startup
+console.log('=== Environment Check ===');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('PORT:', process.env.PORT);
+console.log('YOUTUBE_API_KEY exists:', !!process.env.YOUTUBE_API_KEY);
+console.log('YOUTUBE_API_KEY length:', process.env.YOUTUBE_API_KEY ? process.env.YOUTUBE_API_KEY.length : 0);
+console.log('GEMINI_API_KEY exists:', !!process.env.GEMINI_API_KEY);
+console.log('=====================');
+
+// Load API keys from environment variables
 const API_KEY = process.env.YOUTUBE_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
+// Validate API keys
+if (!API_KEY) {
+    console.error('ERROR: YOUTUBE_API_KEY is not set in environment variables');
+}
+
+if (!GEMINI_API_KEY) {
+    console.error('ERROR: GEMINI_API_KEY is not set in environment variables');
+}
+
 // Configure CORS - this must be the first middleware
 const corsOptions = {
-    origin: 'https://youtube-transcript-gsbv.onrender.com',
+    origin: [
+        'http://localhost:10000',
+        'http://127.0.0.1:10000',
+        'https://youtube-transcript-gsbv.onrender.com'
+    ],
     methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type'],
     optionsSuccessStatus: 200
