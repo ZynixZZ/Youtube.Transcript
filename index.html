@@ -120,12 +120,15 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
+                    mode: 'cors',
                     body: JSON.stringify({ videoId })
                 });
 
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+
                 if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ error: 'Failed to fetch transcript' }));
-                    throw new Error(errorData.error || 'Failed to fetch transcript');
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
                 const data = await response.json();

@@ -3,32 +3,29 @@ const express = require('express');
 const cors = require('cors');
 const { google } = require('googleapis');
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3000;  // Render will provide the PORT environment variable
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const API_KEY = process.env.YOUTUBE_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-// Simple CORS configuration
-app.use(cors({
-    origin: '*',  // Allow all origins
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-}));
-
-app.use(express.json());
-app.use(express.static('.'));
-
-// Add response headers middleware
+// CORS configuration
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
+    res.setHeader('Access-Control-Allow-Origin', 'https://youtube-transcript-gsbv.onrender.com');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
+    
+    // Handle preflight requests
     if (req.method === 'OPTIONS') {
-        return res.sendStatus(200);
+        res.sendStatus(200);
+        return;
     }
     next();
 });
+
+app.use(express.json());
+app.use(express.static('.'));
 
 // Add request logging middleware
 app.use((req, res, next) => {
@@ -338,7 +335,7 @@ app.use((err, req, res, next) => {
     });
 });
 
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Server running on port ${port}`);
     console.log('Using API key:', API_KEY ? 'API key is set' : 'API key is missing');
 }); 
