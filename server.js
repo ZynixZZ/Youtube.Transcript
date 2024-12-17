@@ -7,6 +7,7 @@ const { google } = require('googleapis');
 const app = express();
 const port = process.env.PORT || 10000;
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { YoutubeTranscript } = require('youtube-transcript');
 
 // Log environment variables at startup
 console.log('=== Environment Check ===');
@@ -71,6 +72,50 @@ const youtube = google.youtube({
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
+async function getTranscript(videoId) {
+    try {
+        console.log('Attempting to get transcript for video:', videoId);
+        
+        // Initialize YouTube API client for video details
+        const youtube = google.youtube({
+            version: 'v3',
+            auth: API_KEY
+        });
+
+        // First get video details
+        const videoResponse = await youtube.videos.list({
+            part: 'snippet',
+            id: videoId
+        });
+
+        if (!videoResponse.data.items || videoResponse.data.items.length === 0) {
+            throw new Error('Video not found');
+        }
+
+        const videoTitle = videoResponse.data.items[0].snippet.title;
+        console.log('Found video:', videoTitle);
+
+        // Get transcript using youtube-transcript
+        console.log('Fetching transcript...');
+        const transcriptItems = await YoutubeTranscript.fetchTranscript(videoId);
+        
+        if (!transcriptItems || transcriptItems.length === 0) {
+            throw new Error('No transcript available for this video');
+        }
+
+        console.log('Transcript found with', transcriptItems.length, 'segments');
+        const transcriptText = transcriptItems.map(item => item.text).join(' ');
+
+        return {
+            text: transcriptText,
+            videoTitle: videoTitle
+        };
+    } catch (error) {
+        console.error('Error in getTranscript:', error);
+        throw error;
+    }
+}
+
 app.post('/api/convert', async (req, res) => {
     try {
         console.log('Received request body:', req.body);
@@ -85,29 +130,20 @@ app.post('/api/convert', async (req, res) => {
         console.log('Using API key:', API_KEY ? 'Present' : 'Missing');
 
         try {
-            // First check if video exists and has captions
-            const videoResponse = await youtube.videos.list({
-                part: 'contentDetails',
-                id: videoId
-            });
-
-            console.log('Video API Response:', JSON.stringify(videoResponse.data, null, 2));
-
-            if (!videoResponse.data.items || videoResponse.data.items.length === 0) {
-                console.log('Video not found');
-                return res.status(404).json({ success: false, error: 'Video not found' });
-            }
-
-            // Try to get transcript
-            const transcript = await getTranscript(videoId);
+            // Get transcript and video details
+            const { text, videoTitle } = await getTranscript(videoId);
             console.log('Transcript retrieved successfully');
             
-            return res.json({ success: true, text: transcript });
+            return res.json({ 
+                success: true, 
+                text: text,
+                videoTitle: videoTitle
+            });
         } catch (error) {
-            console.error('Error in YouTube API or transcript fetch:', error);
+            console.error('Error in transcript fetch:', error);
             return res.status(500).json({ 
                 success: false, 
-                error: 'Failed to fetch video information or transcript',
+                error: 'Failed to fetch transcript',
                 details: error.message 
             });
         }
@@ -120,41 +156,6 @@ app.post('/api/convert', async (req, res) => {
         });
     }
 });
-
-async function getTranscript(videoId) {
-    try {
-        console.log('Attempting to get transcript for video:', videoId);
-        
-        // Initialize YouTube API client
-        const youtube = google.youtube({
-            version: 'v3',
-            auth: API_KEY
-        });
-
-        // First check if captions are available
-        const captionResponse = await youtube.captions.list({
-            part: 'snippet',
-            videoId: videoId
-        });
-
-        console.log('Caption API Response:', JSON.stringify(captionResponse.data, null, 2));
-
-        if (!captionResponse.data.items || captionResponse.data.items.length === 0) {
-            throw new Error('No captions available for this video');
-        }
-
-        // Get the first available caption track
-        const captionTrack = captionResponse.data.items[0];
-        console.log('Found caption track:', captionTrack.id);
-
-        // Here you would normally download and parse the caption track
-        // For now, return a placeholder
-        return `Transcript for video ${videoId}`;
-    } catch (error) {
-        console.error('Error in getTranscript:', error);
-        throw error;
-    }
-}
 
 app.post('/api/ask-ai', async (req, res) => {
     try {

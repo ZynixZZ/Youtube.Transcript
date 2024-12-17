@@ -136,7 +136,7 @@
                 const data = await response.json();
                 if (data.success) {
                     videoTranscript = data.text;
-                    currentVideoTitle = data.videoTitle;
+                    currentVideoTitle = data.videoTitle || 'Unknown Title';
 
                     // Update the input group to include the summarize button
                     const inputGroup = document.querySelector('.input-group');
@@ -149,7 +149,7 @@
                     }
 
                     result.innerHTML = `
-                        <h3>Video Title: ${data.videoTitle}</h3>
+                        <h3>Video Title: ${data.videoTitle || 'Unknown Title'}</h3>
                         <div class="caption-text">${data.text}</div>
                         <div class="buttons-container">
                             <button onclick="copyToClipboard()" class="copy-btn">Copy to Clipboard</button>
